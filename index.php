@@ -1,5 +1,9 @@
 <?php
 
+//load bitwasp
+use BitWasp\BitcoinLib\BitcoinLib;
+require_once('vendor/autoload.php');
+
 //fetch post data
 	//get private key
 		//sanitize input by verifying checksum FUNCTION
@@ -71,7 +75,10 @@ Whenever entering a private key into any online form you should assume that addr
 function getUnspent(){
 var pkey = document.getElementById("pkey").value;
 var outputDiv = document.getElementById("output");
-outputDiv.innerHTML = pkey;
+outputDiv.innerHTML = "<input type='submit' class='button' name='check_unspent' value='Check For Funds'>";
+  if(pkey == ""){
+	outputDiv.innerHTML = "";
+  }
 }
 </script>
 </html>
