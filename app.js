@@ -9,8 +9,8 @@ app.get("/", function(req, res){
 	res.sendfile(__dirname + "/index2.html");
 });
 
-app.post("/login", function(req,res){
-	var wif = req.body.user;
+app.post("/address", function(req,res){
+	var wif = req.body.pkey;
 	var address = new bitcore.PrivateKey(wif).toAddress();
 	console.log(address);
 	res.send("Addy " + address);
