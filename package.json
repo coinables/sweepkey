@@ -1,0 +1,17 @@
+{
+  "name": "sweep",
+  "version": "1.0.0",
+  "description": "sweepkey to new addy",
+  "main": "app.js",
+  "dependencies": {
+    "bitcore-lib": "^0.13.19",
+    "body-parser": "^1.15.2",
+    "express": "^3.21.2"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Kyle",
+  "license": "ISC"
+}
