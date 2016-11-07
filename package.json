@@ -7,6 +7,7 @@
     "bitcore-lib": "^0.13.19",
     "body-parser": "^1.15.2",
     "express": "^3.21.2",
+    "merge": "^1.2.0",
     "request": "^2.78.0"
   },
   "devDependencies": {},
