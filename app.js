@@ -2,7 +2,6 @@ var express = require("express");
 var app = express();
 var bodyParser = require("body-parser");
 var bitcore = require("bitcore-lib");
-var merge = require("merge");
 
 app.use(bodyParser.urlencoded({}));
 
@@ -29,6 +28,7 @@ app.post("/address", function(req,res){
 		var num = body.unspent_outputs.length;
 		var utxos = [];
 		var totalSats = 0;	
+		var txSize = 44;
 			
 			for(i=0;i < num; i++){
 			var utxo = {
@@ -39,25 +39,31 @@ app.post("/address", function(req,res){
 				"satoshis": body.unspent_outputs[i].value
 			};
 			utxos.push(utxo);
-			totalSats = totalSats + body.unspent_outputs[i].value
+			totalSats = totalSats + body.unspent_outputs[i].value;
+			txSize = txSize + 180;
 			};
+			
+		var fee = txSize * 20;
+		totalSats = totalSats - fee;
+		
+		if(totalSats < 1){
+		 alert("you don't have enough funds to send with a sufficient fee");
+		} else {
 			
 		var transaction = new bitcore.Transaction()
 		  .from(utxos)
 		  .to(output, totalSats)
 		  .sign(wif);
 		
-		//console.log(i);
-		//console.log(body.unspent_outputs[i].tx_hash_big_endian);
-		//console.log(body.unspent_outputs[i].value);
-	
-		
+				
 		console.log(transaction);
 		console.log("done");
-	})
+		};
+		//display to user
+		res.send("Fee: " + fee + 
+		"<br>Amount sent: " + totalSats + "<br>Destination: " + output + "<br><br>TX Hash " + transaction);
+	});
 	
-	//display to user
-		res.send("Addy " + address);
 	});
 
 app.listen(8080, function(){
