@@ -57,15 +57,35 @@ app.post("/address", function(req,res){
 		
 				
 		console.log(transaction);
+		var txjson = transaction.toString();
+		console.log(txjson);
+		var pload = {
+			"tx_hex": txjson
+		};
+		
+		request({
+			url: "https://chain.so/api/v2/send_tx/BTC/",
+			method: "POST",
+			json: true,
+			headers: {
+				"content-type": "application/json",
+			},
+			body: pload
+		}, function(err, response){
+			if(err){ 
+				return console.log(err);
+			};
+			console.log(JSON.stringify(response));
+		});
 		console.log("done");
 		};
 		//display to user
-		res.send("Fee: " + fee + 
-		"<br>Amount sent: " + totalSats + "<br>Destination: " + output + "<br><br>TX Hash " + transaction);
+		res.send("<body bgcolor='#0b161d'><font color='#f8f8f8'><br>Destination: <a href='https://btc.com/"+output+"' target='_blank'>" + output + "</a><br>Amount sent: " + totalSats + 
+		"<br>Fee: " + fee + "<br><br><a href='../'>Send Another</a></font>");
 	});
 	
 	});
 
-app.listen(8080, function(){
-	console.log("sever running on 8080");
+app.listen(80, function(){
+	console.log("sever running on 80");
 });
