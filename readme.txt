@@ -14,5 +14,5 @@ Enter a private key, enter a destination address click send. Done.
 sweepkey.org
 
 
-This can be a very dangerous tool. If you enter the wrong destination address and your funds are gone. 
-Take appropriate attention while engaging in financial transactions. 
+This can be a very dangerous tool. If you enter the wrong destination address your funds are gone. 
+Take appropriate care and attention while engaging in financial transactions. 
