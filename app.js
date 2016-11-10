@@ -25,8 +25,7 @@ app.post("/address", function(req,res){
 		}
 		
 			var address = new bitcore.PrivateKey(pkeyValue).toAddress();
-			console.log(address);
-		
+					
 			//create a tx
 			var privateKey = new bitcore.PrivateKey(pkeyValue);
 			
@@ -69,9 +68,8 @@ app.post("/address", function(req,res){
 				  .sign(pkeyValue);
 				
 						
-				console.log(transaction);
+				
 				var txjson = transaction.toString();
-				console.log(txjson);
 				var pload = {
 					"tx_hex": txjson
 				};
@@ -101,11 +99,7 @@ app.post("/address", function(req,res){
 		//priv key invalid
 		res.send("invalid private key");
 		}
-	
-
-	
-	
-	
+		
 	});
 
 app.listen(80, function(){
