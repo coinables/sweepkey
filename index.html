@@ -68,4 +68,20 @@ Whenever entering a private key into any online form you should assume that addr
 <br>
 <br>
 <a href="https://github.com/coinables/sweepkey">View on GitHub</a>
+<br>
+<div id="donate"></div>
+<script>
+        var xbtc = new XMLHttpRequest();
+		var xpub = "xpub6CGWhtU3qscCcyu1DA2guA6iSm5UA7ABqHUJnMka3rA84CBdDgyJi9DWvGz4q511sNh97qEBatksUkj63hVeyj4ryiHHcv932JTj7o8y1Qg";
+		var url = "https://api.smartbit.com.au/v1/blockchain/address/"+ xpub;
+        xbtc.open('GET', 'https://api.smartbit.com.au/v1/blockchain/address/'+ xpub, true);
+        xbtc.onreadystatechange = function(){
+	    if(xbtc.readyState == 4){
+		var json = JSON.parse(xbtc.responseText);
+		var nextAddy = json.address.extkey_next_receiving_address;
+		document.getElementById('donate').innerHTML = "Donations: " + nextAddy;
+        }
+        };
+        xbtc.send();
+</script>
 </html>
