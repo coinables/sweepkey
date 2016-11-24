@@ -6,6 +6,7 @@
   "dependencies": {
     "bitcore-lib": "^0.13.19",
     "body-parser": "^1.15.2",
+    "ejs": "^2.5.2",
     "express": "^3.21.2",
     "request": "^2.78.0"
   },

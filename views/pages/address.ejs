@@ -1,0 +1,52 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+<% include ../partials/header %>
+<h2>Sweep a Bitcoin private key to a new address.</h2>
+
+   
+<form method="post" action="/address">
+	<input type="text" class="form-control" name="pkey" id="pkey" placeholder="Enter a Private Key" required>
+	<input type="text" class="form-control" name="addy" placeholder="Destination Address" required>
+	<input type="submit" class="btn btn-success" name="send_funds" value="TRANSFER ALL FUNDS">
+</form>
+<div class="panel panel-default">
+  <div class="panel-heading">You sent <%= amountTx %> to <%= destinationAddress %></div>
+  <div class="panel-body">
+    Tx Id: <%= successTxId %>
+  </div>
+</div>    
+<br>
+<div class="alert alert-dismissible alert-danger">
+  <button type="button" class="close" data-dismiss="alert">&times;</button>
+  <strong>Fees Notice:</strong><br> <a href="#" class="alert-link">Every transaction is sent with a 20 satoshi per byte mining fee.
+</div>
+    <br>
+    <div class="alert alert-dismissible alert-warning">
+  <button type="button" class="close" data-dismiss="alert">&times;</button>
+  <h4>Warning!</h4>
+  <p>Although sweepkey does not save, store, or 
+log any private keys, it is very important not to re-use a private key of an address entered on this site. 
+Whenever entering a private key into any online form you should assume that address is no longer safe..</p>
+</div>
+<br>
+<br>
+<a href="https://github.com/coinables/sweepkey">View on GitHub</a>
+<br>
+<div id="donate"></div>
+<script>
+        var xbtc = new XMLHttpRequest();
+		var xpub = "xpub6CGWhtU3qscCcyu1DA2guA6iSm5UA7ABqHUJnMka3rA84CBdDgyJi9DWvGz4q511sNh97qEBatksUkj63hVeyj4ryiHHcv932JTj7o8y1Qg";
+		var url = "https://api.smartbit.com.au/v1/blockchain/address/"+ xpub;
+        xbtc.open('GET', 'https://api.smartbit.com.au/v1/blockchain/address/'+ xpub, true);
+        xbtc.onreadystatechange = function(){
+	    if(xbtc.readyState == 4){
+		var json = JSON.parse(xbtc.responseText);
+		var nextAddy = json.address.extkey_next_receiving_address;
+		document.getElementById('donate').innerHTML = "Donations: " + nextAddy;
+        }
+        };
+        xbtc.send();
+</script>
+</html>

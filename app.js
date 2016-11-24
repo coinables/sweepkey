@@ -1,14 +1,27 @@
+//require express, bitcore, request and body parser
 var express = require("express");
 var app = express();
-var bodyParser = require("body-parser");
+var request = require("request");
+var bodyparser = require("body-parser");
 var bitcore = require("bitcore-lib");
 
-app.use(bodyParser.urlencoded({}));
+//set ejs as view engine template
+app.set("view engine", "ejs");
 
+//tell express to use bodyparser
+app.use(bodyparser.urlencoded({
+    extended: true
+}));
+app.use(bodyparser.json());
+
+//render index page under root dir
 app.get("/", function(req, res){
-	res.sendfile(__dirname + "/index.html");
+    res.render("pages/index.ejs", {
+         outMessage: ""
+    });
 });
 
+//render address page on POST data
 app.post("/address", function(req,res){
 	var wif = req.body.pkey;
 	var output = req.body.addy;
@@ -21,7 +34,9 @@ app.post("/address", function(req,res){
 		//check distination address
 		addyValue = output.replace(/[^\w\s]/gi, '');
 		if(!bitcore.Address.isValid(addyValue)){
-		res.send("Invalid address");
+		res.render("pages/index.ejs", {
+            outMessage: "Invalid Address"
+        });
 		}
 		
 			var address = new bitcore.PrivateKey(pkeyValue).toAddress();
@@ -31,12 +46,16 @@ app.post("/address", function(req,res){
 			
 			//get unspent from bcinfo
 			//todo get additional sources for unspent utxo
-			var request = require("request");
 			var url = "https://blockchain.info/unspent?active="+ address;
 			request({
 				url: url,
 				json: true
 			},function(error, response, body){
+                if(!body.unspent_outputs){
+                    res.render("pages/index.ejs", {
+                        outMessage: "No UTXOs For This Address"
+                    });
+                };
 				if(body.unspent_outputs){
 					var num = body.unspent_outputs.length;
 					var utxos = [];
@@ -60,7 +79,9 @@ app.post("/address", function(req,res){
 					totalSats = totalSats - fee;
 					
 					if(totalSats < 1){
-					 alert("you don't have enough funds to send with a sufficient fee");
+					    res.render("pages/index.ejs", {
+                           outMessage: "This transaction can't afford the 20 satoshis per byte mining fee"
+                        });
 					} else {
 						
 					var transaction = new bitcore.Transaction()
@@ -83,23 +104,34 @@ app.post("/address", function(req,res){
 							"content-type": "application/json",
 						},
 						body: pload
-					}, function(err, response){
-						if(err){ 
-							return console.log(err);
+					}, function(err, response, body){
+						if(err || response.statusCode != 200){ 
+							console.log(err);
 						};
-						console.log(JSON.stringify(response));
+                        
+						console.log(JSON.stringify(body));
+                        completeTxId = body.data.txid;
+                        console.log("done");
+                        //display to user
+                        res.render("pages/address.ejs", {
+                            amountTx: totalSats,
+                            destinationAddress: output,
+                            successTxId: completeTxId
+                        });
 					});
-					console.log("done");
-					};
-					//display to user
-					res.send("<body bgcolor='#0b161d'><font color='#f8f8f8'><br>Destination: <a href='https://btc.com/"+output+"' target='_blank'>" + output + "</a><br>Amount sent: " + totalSats + 
-					"<br>Fee: " + fee + "<br><br><a href='../'>Send Another</a></font>");
+					
+				};
+					
+					
 				}
 			});
 		
 		} else {
 		//priv key invalid
-		res.send("invalid private key");
+		res.render("pages/index.ejs", {
+            outMessage: "Invalid Private Key"
+        });
+            
 		}
 		
 	});
