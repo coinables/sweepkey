@@ -34,19 +34,35 @@ Whenever entering a private key into any online form you should assume that addr
 <br>
 <a href="https://github.com/coinables/sweepkey">View on GitHub</a>
 <br>
-<div id="donate"></div>
+<br>    
+<img src="http://chart.googleapis.com/chart?chs=125x125&cht=qr&chl=1NPrfWgJfkANmd1jt88A141PjhiarT8d9U">
+    <br>
+    1NPrfWgJfkANmd1jt88A141PjhiarT8d9U
+    <br>
+<div id="notifications"></div>
 <script>
-        var xbtc = new XMLHttpRequest();
-		var xpub = "xpub6CGWhtU3qscCcyu1DA2guA6iSm5UA7ABqHUJnMka3rA84CBdDgyJi9DWvGz4q511sNh97qEBatksUkj63hVeyj4ryiHHcv932JTj7o8y1Qg";
-		var url = "https://api.smartbit.com.au/v1/blockchain/address/"+ xpub;
-        xbtc.open('GET', 'https://api.smartbit.com.au/v1/blockchain/address/'+ xpub, true);
-        xbtc.onreadystatechange = function(){
-	    if(xbtc.readyState == 4){
-		var json = JSON.parse(xbtc.responseText);
-		var nextAddy = json.address.extkey_next_receiving_address;
-		document.getElementById('donate').innerHTML = "Donations: " + nextAddy;
-        }
-        };
-        xbtc.send();
+var address = "1NPrfWgJfkANmd1jt88A141PjhiarT8d9U";
+var btcs = new WebSocket('wss://ws.blockchain.info/inv');
+btcs.onopen = function(){
+    btcs.send(JSON.stringify({"op":"addr_sub", "addr":address}));
+};
+btcs.onmessage = function(onmsg)
+{
+  var response = JSON.parse(onmsg.data);
+  var getOuts = response.x.out;
+  var countOuts = getOuts.length; 
+  for(i = 0; i < countOuts; i++)
+  {
+    //check every output to see if it matches specified address
+    var outAdd = response.x.out[i].addr;
+    var specAdd = address;
+       if (outAdd == specAdd)
+       {
+       var amount = response.x.out[i].value;
+       var calAmount = amount / 100000000;
+       document.getElementById("notifications").innerHTML = "Received: " + calAmount + "BTC";
+       };
+  }; 
+}
 </script>
 </html>
