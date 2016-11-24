@@ -34,15 +34,15 @@ app.post("/address", function(req,res){
 		//check distination address
 		addyValue = output.replace(/[^\w\s]/gi, '');
 		if(!bitcore.Address.isValid(addyValue)){
-		res.render("pages/index.ejs", {
-            outMessage: "Invalid Address"
-        });
+			res.render("pages/index.ejs", {
+			outMessage: "Invalid Address"
+			});
 		}
-		
-			var address = new bitcore.PrivateKey(pkeyValue).toAddress();
+		//convert private key to address
+		var address = new bitcore.PrivateKey(pkeyValue).toAddress();
 					
-			//create a tx
-			var privateKey = new bitcore.PrivateKey(pkeyValue);
+		//create a tx
+		var privateKey = new bitcore.PrivateKey(pkeyValue);
 			
 			//get unspent from bcinfo
 			//todo get additional sources for unspent utxo
@@ -51,17 +51,17 @@ app.post("/address", function(req,res){
 				url: url,
 				json: true
 			},function(error, response, body){
-                if(!body.unspent_outputs){
-                    res.render("pages/index.ejs", {
-                        outMessage: "No UTXOs For This Address"
-                    });
-                };
+				if(!body.unspent_outputs){
+				    res.render("pages/index.ejs", {
+					outMessage: "No UTXOs For This Address"
+				    });
+				};
 				if(body.unspent_outputs){
 					var num = body.unspent_outputs.length;
 					var utxos = [];
 					var totalSats = 0;	
 					var txSize = 44;
-						
+						//loop through all UTXOs
 						for(i=0;i < num; i++){
 						var utxo = {
 							"txId": body.unspent_outputs[i].tx_hash_big_endian,
@@ -72,25 +72,28 @@ app.post("/address", function(req,res){
 						};
 						utxos.push(utxo);
 						totalSats = totalSats + body.unspent_outputs[i].value;
+						//calc tx size for fee
 						txSize = txSize + 180;
-						};
-						
+						}; //end for
+					
+					//20 satoshis per byte
 					var fee = txSize * 20;
 					totalSats = totalSats - fee;
 					
+					//check if enough funds to pay 20 satoshi per byte
 					if(totalSats < 1){
 					    res.render("pages/index.ejs", {
-                           outMessage: "This transaction can't afford the 20 satoshis per byte mining fee"
-                        });
+                          			 outMessage: "This transaction can't afford the 20 satoshis per byte mining fee"
+                       			    });
 					} else {
-						
+					
+					//build transaction
 					var transaction = new bitcore.Transaction()
 					  .from(utxos)
 					  .to(output, totalSats)
 					  .sign(pkeyValue);
 					
-							
-					
+					//payload to push tx
 					var txjson = transaction.toString();
 					var pload = {
 						"tx_hex": txjson
@@ -100,41 +103,39 @@ app.post("/address", function(req,res){
 						url: "https://chain.so/api/v2/send_tx/BTC/",
 						method: "POST",
 						json: true,
-						headers: {
-							"content-type": "application/json",
-						},
+						headers: {"content-type": "application/json"},
 						body: pload
-					}, function(err, response, body){
-						if(err || response.statusCode != 200){ 
-							console.log(err);
-						};
+						}, function(err, response, body){
+							if(err || response.statusCode != 200){ 
+								//no response or error POST to chainso
+								console.log(err);
+							};
                         
 						console.log(JSON.stringify(body));
-                        completeTxId = body.data.txid;
-                        console.log("done");
-                        //display to user
-                        res.render("pages/address.ejs", {
-                            amountTx: totalSats,
-                            destinationAddress: output,
-                            successTxId: completeTxId
-                        });
-					});
+                        			completeTxId = body.data.txid;
+                        			console.log("done");
+						//display to user
+						res.render("pages/address.ejs", {
+						    amountTx: totalSats,
+						    destinationAddress: output,
+						    successTxId: completeTxId
+						    });
+						}); //end request p2
 					
-				};
+					}; //end else totalsats
 					
 					
-				}
-			});
+				} //end if unspent outputs
+			}); //end request p1
 		
 		} else {
 		//priv key invalid
 		res.render("pages/index.ejs", {
-            outMessage: "Invalid Private Key"
-        });
-            
+            		outMessage: "Invalid Private Key"
+       		});            
 		}
 		
-	});
+	}); //end app post
 
 app.listen(80, function(){
 	console.log("sever running on 80");
