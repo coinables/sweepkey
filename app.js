@@ -141,18 +141,19 @@ function getUTXO(address, callback){
 			//calc tx size for fee
 			txSize = txSize + 180;
                 }; //end utxo loop
-            var fee = txSize * 20;
-            totalSats = totalSats - fee;
-            console.log(totalSats);
-            console.log(fee);
-                if(totalSats < 1){
-                    //not enough funds to send
-                    var err = 3;
-                    callback(err);
-                } else {
-                    callback(utxos, fee, totalSats);  
-                }
-            
+            getBestFee(function(bestHourFee){
+                var fee = txSize * bestHourFee;
+                totalSats = totalSats - fee;
+                console.log(totalSats);
+                console.log(fee);
+                    if(totalSats < 1){
+                        //not enough funds to send
+                        var err = 3;
+                        callback(err);
+                    } else {
+                        callback(utxos, fee, totalSats);  
+                    }
+            });            
        } else {
            //err or no response from api
            console.log("no response from api");
@@ -199,3 +200,23 @@ function pushTX(pload, callback){
            	};                
     });
 };
+
+function getBestFee(bestFee){
+  var findfee = "https://bitcoinfees.21.co/api/v1/fees/recommended";
+    request({
+        url: findfee,
+        json: true
+    }, function(error, response, body){
+        if(!body.hourFee){
+            //no response from api use 150 sats per byte
+            var fee = 150;
+            bestFee(fee);
+        }
+        if(body.hourFee){
+            var fee = body.hourFee;
+            fee = fee * 0.5;
+            fee = Math.ceil(fee);
+            bestFee(fee);
+        }
+    });  
+}
