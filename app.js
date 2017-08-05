@@ -75,6 +75,148 @@ app.post("/address", function(req,res){
     });//end validate address
 }); //end app post
 
+//sweep GET endpoint
+app.get("/sweep", function(req,res){
+	if(!req.query.addr){
+        res.setHeader("Content-Type", "application/json");
+        res.send(JSON.stringify({
+            status: "error",
+            message: "missing address parameter"
+        }));  
+    }
+    if(!req.query.pkey){
+        res.setHeader("Content-Type", "application/json");
+        res.send(JSON.stringify({
+            status: "error",
+            message: "missing privatekey parameter"
+        }));  
+    }
+    
+    var wif = req.query.pkey;
+    var output = req.query.addr;
+	
+		//validate pkey
+		pkeyValue = wif.replace(/[^\w\s]/gi, '');
+		if(bitcore.PrivateKey.isValid(pkeyValue)){
+		//private key is valid
+		
+		//check distination address
+		addyValue = output.replace(/[^\w\s]/gi, '');
+		if(!bitcore.Address.isValid(addyValue)){
+		        res.setHeader("Content-Type", "application/json");
+                res.send(JSON.stringify({
+                    status: "error",
+                    message: "invalid address"
+                }));
+		}
+		
+			var address = new bitcore.PrivateKey(pkeyValue).toAddress();
+					
+			//create a tx
+			var privateKey = new bitcore.PrivateKey(pkeyValue);
+			
+			//get unspent from bcinfo
+			//todo get additional sources for unspent utxo
+			var url = "https://blockchain.info/unspent?active="+ address;
+			request({
+				url: url,
+				json: true
+			},function(error, response, body){
+				if(!body.unspent_outputs){
+				    res.setHeader("Content-Type", "application/json");
+				    res.send(JSON.stringify({
+					status: "error",
+					message: "No UTXOs"
+				    }));
+				};
+				if(body.unspent_outputs){
+					var num = body.unspent_outputs.length;
+					var utxos = [];
+					var totalSats = 0;	
+					var txSize = 44;
+						
+						for(i=0;i < num; i++){
+						var utxo = {
+							"txId": body.unspent_outputs[i].tx_hash_big_endian,
+							"outputIndex": body.unspent_outputs[i].tx_output_n,
+							"address": address,
+							"script": body.unspent_outputs[i].script,
+							"satoshis": body.unspent_outputs[i].value
+						};
+						utxos.push(utxo);
+						totalSats = totalSats + body.unspent_outputs[i].value;
+						txSize = txSize + 180;
+						};
+					
+                        //feerate
+                        getBestFee(function(bestHourFee){
+                            var fee = txSize * bestHourFee;
+                            totalSats = totalSats - fee;
+
+                                if(totalSats < 1){
+                                    res.setHeader("Content-Type", "application/json");
+                                    res.send(JSON.stringify({
+                                        status: "error",
+                                        message: "Insufficent funds after "+fee+" mining fee"
+                                    }));
+                                } else {
+
+                                    var transaction = new bitcore.Transaction()
+                                      .from(utxos)
+                                      .to(output, totalSats)
+                                      .sign(pkeyValue);
+
+
+
+                                    var txjson = transaction.toString();
+                                    var pload = {
+                                        "tx_hex": txjson
+                                    };
+
+                                    request({
+                                        url: "https://chain.so/api/v2/send_tx/BTC/",
+                                        method: "POST",
+                                        json: true,
+                                        headers: {
+                                            "content-type": "application/json",
+                                        },
+                                        body: pload
+                                    }, function(err, response, body){
+                                        if(err || response.statusCode != 200){ 
+                                            console.log(err);
+                                        };
+
+                                        //console.log(JSON.stringify(body));
+                                        completeTxId = body.data.txid;
+                                        console.log("done");
+                                        //display to user
+                                        res.setHeader("Content-Type", "application/json");
+                                        res.send(JSON.stringify({
+                                            status: "success",
+                                            amount: totalSats, 
+                                            to: output, 
+                                            txid: completeTxId
+                                        }));
+                                    });
+
+                                }; //ends else if can afford fees
+                        });//ends get best fee
+            			
+			}; //end if
+		}); //end request for bcinfo utxo 
+		
+		} else {
+		//priv key invalid
+		res.setHeader("Content-Type", "application/json");
+        	res.send(JSON.stringify({
+            	status: "error",
+            	message: "invalid private key"
+        	}));
+            
+		}
+		
+}); //ends sweep endpoint
+
 app.listen(80, function(){
 	console.log("sever running on 80");
 });
