@@ -38,7 +38,7 @@ input.form-control{
 <option class="form-control" value="main">Mainnet</option>
 </select>
 <br>
-<b>Address Type: </b><select id="addrtype" class="form-control wideinput">
+<b>Address Type: </b><select id="addrtype" onchange="return showaddr();" class="form-control wideinput">
 <option class="form-control" value="p2pkh">Legacy (Starts with 1..)</option>
 <option class="form-control" value="p2sh-p2wpkh">P2SH Segwit (Starts with 3..)</option>
 <option class="form-control" value="p2wpkh">Native Segwit (Starts with bc1..)</option>
@@ -46,9 +46,12 @@ input.form-control{
 <br>
 <br>
 
-<b>Private Key: </b><input type="password" id="inputwif" class="wideinput form-control" required>
+<b>Private Key: </b><input type="password" id="inputwif" onchange="return showaddr();" class="wideinput form-control" required>
+<input readonly id="queryaddr" class="wideinput form-control">
 <br>
-<button class="btn btn-success" id="getUTXO">Find UTXOs</button>
+<b>Destination Address: </b><input type="text" id="outputaddr" class="form-control wideinput">
+<br>
+<button class="btn btn-success" id="getUTXO">Sweep</button>
 <br><br>
 <div id="loading"></div>
 <br><br>
@@ -60,15 +63,12 @@ input.form-control{
 		<input type="hidden" id="inputaddr">
 		<input type="hidden" id="inputaddrp2sh">
 		<input type="hidden" id="inputaddrbech32">
-		<input readonly id="queryaddr" class="wideinput form-control">
-
-		<b>Destination Address: </b><input type="text" id="outputaddr" class="form-control wideinput">
-		<br><br>
+		
 
 		<b>Fee (Sats per byte): </b><input type="number" id="satperbyte" class="form-control" value="3">
-		<br><br>
-
+		<br>
 		<button id="sweepbtn" class="btn btn-info">Sweep All Funds To Destination Address</button>
+		<br>
 	<div id="results"></div>
 	</div>
 
@@ -90,6 +90,27 @@ Whenever entering a private key into any online form you should assume that addr
 </div>
 <script>
 
+function showaddr(){
+	var keyinput = $("#inputwif").val();
+	var keyinputlength = keyinput.length;
+	if(keyinputlength>24){
+		var netselect = $("#network").val();
+		var NETWORKB = netselect === "test" ? "testnet" : "";
+		var newkeypair = buidl.getDetails(keyinput, NETWORKB);
+		
+		var addrtype = $("#addrtype").val();
+	
+		if(addrtype ==="p2wpkh"){
+			$("#queryaddr").val(newkeypair.p2wpkh);
+		}
+		if(addrtype ==="p2sh-p2wpkh"){
+			$("#queryaddr").val(newkeypair.p2shp2wpkh);
+		}
+		if(addrtype ==="p2pkh"){
+			$("#queryaddr").val(newkeypair.p2pkh);
+		}
+	}	
+}
 
 function getUTXOs(){
 	
@@ -411,9 +432,17 @@ function sweepUTXOs(){
 	  }
 	
 	
-	$("#results").html('Raw Transaction Hash to Broadcast:<br><input class="wideinput" value="'+tx_raw+'">' );
+	$("#results").html('<br>Transaction created, <b>BUT NOT BROADCAST</b> you are responsible for broadcasting your transaction with a node, wallet, or 3rd party service (<a href="https://live.blockcypher.com/btc-testnet/pushtx/">Blockcypher</a>, Smartbit <a href="https://testnet.smartbit.com.au/txs/pushtx">Testnet</a> | <a href="https://www.smartbit.com.au/txs/pushtx">Mainnet</a>, Blockstream <a href="https://blockstream.info/testnet/tx/push">Testnet</a> | <a href="https://blockstream.info/tx/push">Mainnet</a>).<br><br>Raw Transaction To Broadcast:<br><input class="form-control wideinput" id="outhexraw" value="'+tx_raw+'" style="display: inline-block;"><button id="copy" class="btn btn-warning">Copy</button><br><br>' );
+	
+	document.querySelector("#copy").addEventListener("click", copy);
 }
 
+function copy() {
+  var copyText = document.querySelector("#outhexraw");
+  copyText.select();
+  document.execCommand("copy");
+  alert("Copied!");
+}
 
 function getByteCountSegwitNative(inputCount,outputCount) {
   var inputSize = 42 + (68 * inputCount)
@@ -421,15 +450,6 @@ function getByteCountSegwitNative(inputCount,outputCount) {
   return Math.ceil(inputSize + outputSize)
 }  
 
-function isEmpty(obj) {
-  for(var prop in obj) {
-    if(obj.hasOwnProperty(prop)) {
-      return false;
-    }
-  }
-
-  return JSON.stringify(obj) === JSON.stringify({});
-}
 
 $("#getUTXO").on("click",getUTXOs);
 $("#sweepbtn").on("click",sweepUTXOs);
