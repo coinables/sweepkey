@@ -2,6 +2,8 @@
 
 SweepKey takes a private key and sends all funds to another address. 
 
+Demo: https://coinables.github.io/sweepkey
+
 Background:
 I was looking for a web app that would allow me to quickly paste in a private key 
 and send all funds to a new address without having to sign up with a wallet provider. 
